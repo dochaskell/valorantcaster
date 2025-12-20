@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Doc's Valorant Caster Agent Quick Sheet</title>
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --stroke:rgba(255,255,255,.10);
+      --stroke2:rgba(255,255,255,.18);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --faint:rgba(255,255,255,.45);
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --shadow2: 0 10px 24px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+
+      /* Role colors */
+      --duelist:#FF6B8B;
+      --initiator:#FFD479;
+      --controller:#7AA6FF;
+      --sentinel:#71F6C8;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 900px at 15% 10%, rgba(122,166,255,.18), transparent 60%),
+        radial-gradient(900px 700px at 85% 0%, rgba(169,123,255,.16), transparent 55%),
+        radial-gradient(900px 700px at 50% 95%, rgba(113,246,200,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100vh;
+    }
+
+    header{
+      padding:28px 22px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    .titlebar{
+      display:flex;
+      gap:14px;
+      align-items:flex-end;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      margin:0;
+      font-weight:800;
+      letter-spacing:-.02em;
+      font-size:clamp(20px, 2.6vw, 30px);
+      line-height:1.1;
+    }
+
+    .sub{
+      margin:8px 0 0;
+      color:var(--muted);
+      max-width:900px;
+      line-height:1.35;
+      font-size:14px;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--stroke2);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow:var(--shadow2);
+      user-select:none;
+    }
+    .toggle input{ display:none; }
+    .pill{
+      width:44px;
+      height:26px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.20);
+      position:relative;
+      transition: border-color .15s ease, background .15s ease;
+      flex:0 0 auto;
+    }
+    .pill::after{
+      content:"";
+      width:20px;
+      height:20px;
+      border-radius:50%;
+      position:absolute;
+      top:50%;
+      left:3px;
+      transform:translateY(-50%);
+      background:rgba(255,255,255,.70);
+      box-shadow:0 6px 16px rgba(0,0,0,.35);
+      transition:left .15s ease, background .15s ease;
+    }
+    .toggleText{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+      gap:4px;
+    }
+    .toggleText .label{
+      font-weight:800;
+      font-size:13px;
+      letter-spacing:-.01em;
+      color:var(--text);
+    }
+    .toggleText .desc{
+      font-size:12px;
+      color:var(--muted);
+      max-width:280px;
+    }
+
+    .toggle input:checked + .pill{
+      border-color:rgba(255,107,139,.55);
+      background:rgba(255,107,139,.12);
+    }
+    .toggle input:checked + .pill::after{
+      left:21px;
+      background:rgba(255,255,255,.92);
+    }
+
+    button{
+      border:1px solid var(--stroke2);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow:var(--shadow2);
+      transition:transform .12s ease, border-color .12s ease, background .12s ease;
+      font-weight:750;
+      font-size:13px;
+    }
+    button:hover{
+      transform:translateY(-1px);
+      border-color:rgba(255,255,255,.26);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+    }
+    button:active{ transform:translateY(0px) scale(.99); }
+    button:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .lockBanner{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .lockBanner .state{
+      font-family:var(--mono);
+      font-weight:900;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      margin-left:8px;
+      display:inline-block;
+    }
+    .state.on{
+      color:rgba(255,255,255,.92);
+      border-color:rgba(255,107,139,.55);
+      background:rgba(255,107,139,.10);
+    }
+    .state.off{
+      color:rgba(255,255,255,.78);
+      border-color:rgba(255,255,255,.18);
+      background:rgba(255,255,255,.04);
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 22px 34px;
+    }
+
+    .board{
+      border:1px solid var(--stroke);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
+        radial-gradient(900px 450px at 50% 0%, rgba(122,166,255,.10), transparent 60%),
+        radial-gradient(900px 450px at 50% 100%, rgba(169,123,255,.08), transparent 60%);
+    }
+
+    .rowHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--stroke);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    }
+    .rowHeader .left{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+    }
+    .rowHeader .teamName{
+      font-weight:900;
+      letter-spacing:-.01em;
+      font-size:15px;
+      outline:none;
+    }
+    .badge{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--stroke2);
+      color:var(--muted);
+      background:rgba(255,255,255,.03);
+    }
+    .hint{
+      color:var(--faint);
+      font-size:12px;
+      line-height:1.2;
+      text-align:right;
+      max-width:420px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0, 1fr));
+      gap:12px;
+      padding:14px;
+      background:rgba(0,0,0,.08);
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .hint{ max-width:360px; }
+    }
+    @media (max-width: 560px){
+      .grid{ grid-template-columns:1fr; }
+      .rowHeader{ align-items:flex-start; }
+      .hint{ text-align:left; max-width:none; }
+    }
+
+    .slot{
+      position:relative;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      padding:12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      min-height:172px;
+      overflow:hidden;
+
+      /* per-slot (set in JS) */
+      --roleColor: rgba(255,255,255,.12);
+      --roleTint: rgba(255,255,255,.00);
+      --roleTint2: rgba(255,255,255,.00);
+
+      background:
+        radial-gradient(520px 220px at 20% 0%, var(--roleTint), transparent 70%),
+        radial-gradient(520px 240px at 90% 120%, var(--roleTint2), transparent 72%),
+        radial-gradient(520px 220px at 20% 0%, rgba(122,166,255,.10), transparent 65%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+
+    .slot::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      border-radius:16px;
+      box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--roleColor) 55%, transparent);
+      opacity:.55;
+    }
+
+    .slot::after{
+      content:"";
+      position:absolute; inset:-1px;
+      border-radius:16px;
+      pointer-events:none;
+      background:linear-gradient(120deg, rgba(122,166,255,.18), rgba(169,123,255,.10), rgba(113,246,200,.08));
+      opacity:.10;
+      filter:blur(10px);
+    }
+
+    .slotTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      position:relative;
+      z-index:1;
+    }
+
+    .slotLabel{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--faint);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .roleTag{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:5px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      color:rgba(255,255,255,.80);
+      white-space:nowrap;
+      max-width:120px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .roleTag[data-role="Duelist"]{
+      border-color: color-mix(in srgb, var(--duelist) 55%, rgba(255,255,255,.10));
+      background: color-mix(in srgb, var(--duelist) 10%, rgba(0,0,0,.16));
+    }
+    .roleTag[data-role="Initiator"]{
+      border-color: color-mix(in srgb, var(--initiator) 55%, rgba(255,255,255,.10));
+      background: color-mix(in srgb, var(--initiator) 10%, rgba(0,0,0,.16));
+    }
+    .roleTag[data-role="Controller"]{
+      border-color: color-mix(in srgb, var(--controller) 55%, rgba(255,255,255,.10));
+      background: color-mix(in srgb, var(--controller) 10%, rgba(0,0,0,.16));
+    }
+    .roleTag[data-role="Sentinel"]{
+      border-color: color-mix(in srgb, var(--sentinel) 55%, rgba(255,255,255,.10));
+      background: color-mix(in srgb, var(--sentinel) 10%, rgba(0,0,0,.16));
+    }
+
+    select{
+      width:100%;
+      border:1px solid var(--stroke2);
+      border-radius:12px;
+      padding:10px 10px;
+      background:rgba(10,14,28,.65);
+      color:var(--text);
+      outline:none;
+      font-weight:750;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    select:focus{
+      border-color:rgba(122,166,255,.55);
+      box-shadow:0 0 0 4px rgba(122,166,255,.15);
+    }
+    select:disabled{
+      opacity:.72;
+      cursor:not-allowed;
+    }
+
+    .agentName{
+      margin:10px 0 4px;
+      font-weight:900;
+      letter-spacing:-.01em;
+      font-size:16px;
+      position:relative;
+      z-index:1;
+    }
+
+    .abilityList{
+      margin:8px 0 0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap:6px;
+      position:relative;
+      z-index:1;
+    }
+    .abilityItem{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(0,0,0,.16);
+      border-radius:12px;
+      padding:8px 10px;
+    }
+    .key{
+      font-family:var(--mono);
+      font-weight:950;
+      letter-spacing:.06em;
+      font-size:12px;
+      color:rgba(255,255,255,.82);
+      min-width:38px;
+    }
+    .abilityName{
+      font-size:13px;
+      color:rgba(255,255,255,.90);
+      font-weight:700;
+      text-align:right;
+      flex:1;
+    }
+    .empty{
+      color:var(--muted);
+      font-size:13px;
+      padding:10px 0 0;
+      position:relative;
+      z-index:1;
+    }
+
+    /* --- Caster vocab section --- */
+    .casterVocab{
+      margin-top:26px;
+    }
+
+    .vocabHeader{
+      padding:0 6px 10px;
+    }
+
+    .casterVocab h2{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:-.01em;
+    }
+
+    .vocabSub{
+      margin:6px 0 0;
+      font-size:13px;
+      color:var(--muted);
+      max-width:820px;
+    }
+
+    .vocabGrid{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0,1fr));
+      gap:12px;
+      padding:14px;
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      background:rgba(0,0,0,.18);
+    }
+
+    .vocabGrid ul{
+      margin:0;
+      padding:10px 12px;
+      list-style:none;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      background:rgba(0,0,0,.22);
+      display:grid;
+      gap:6px;
+    }
+
+    .vocabGrid li{
+      font-size:12.5px;
+      color:rgba(255,255,255,.86);
+      line-height:1.25;
+    }
+
+    @media (max-width: 980px){
+      .vocabGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 560px){
+      .vocabGrid{ grid-template-columns:1fr; }
+    }
+
+    .footerNote{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      padding:0 4px;
+    }
+    .footerNote code{
+      font-family:var(--mono);
+      font-size:12px;
+      color:rgba(255,255,255,.82);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="titlebar">
+      <div>
+        <h1>Doc's Valorant Caster Agent Quick Sheet</h1>
+        <p class="sub">
+          Select agents for each team. Each slot shows ability names (C/Q/E) and ultimate (X).
+          Lock Mode freezes dropdowns to avoid misclicks during a live cast.
+        </p>
+      </div>
+
+      <div class="controls">
+        <label class="toggle" title="When locked, agent dropdowns can’t be changed.">
+          <input id="lockToggle" type="checkbox" />
+          <span class="pill" aria-hidden="true"></span>
+          <span class="toggleText">
+            <span class="label">Lock mode</span>
+            <span class="desc">Disable dropdowns + actions</span>
+          </span>
+        </label>
+
+        <button id="clearAllBtn" type="button">Clear all slots</button>
+        <button id="swapBtn" type="button">Swap teams</button>
+      </div>
+    </div>
+
+    <div class="lockBanner" id="lockBanner">
+      Status:
+      <span class="state off" id="lockState">UNLOCKED</span>
+      <span id="lockHelp">You can change agent selections.</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="board" aria-label="Agent selection board">
+      <div class="rowHeader">
+        <div class="left">
+          <div class="teamName" contenteditable="true" spellcheck="false" id="team1Name">Team 1</div>
+          <div class="badge">Top row</div>
+        </div>
+        <div class="hint">Tip: click the team name to edit it (team names stay editable even when locked).</div>
+      </div>
+      <div class="grid" id="team1Row"></div>
+
+      <div class="rowHeader" style="border-top:1px solid var(--stroke);">
+        <div class="left">
+          <div class="teamName" contenteditable="true" spellcheck="false" id="team2Name">Team 2</div>
+          <div class="badge">Bottom row</div>
+        </div>
+        <div class="hint">Role tag + border + subtle tint update automatically when you pick an agent.</div>
+      </div>
+      <div class="grid" id="team2Row"></div>
+    </section>
+
+    <section class="casterVocab">
+      <div class="vocabHeader">
+        <h2>Caster Vocabulary & Cue Bank</h2>
+        <p class="vocabSub">
+          Randomized on load. 50 unique phrases (5 columns × 10), aligned under agent slots.
+        </p>
+      </div>
+
+      <div class="vocabGrid" id="vocabGrid" aria-label="Caster vocabulary lists">
+        <!-- JS fills 5 lists of 10 items here -->
+      </div>
+    </section>
+
+    <div class="footerNote">
+      To edit agent data: search for <code>AGENTS</code>. Role colors are in <code>:root</code>. Vocab pool is <code>CASTER_VOCAB_POOL</code>.
+    </div>
+  </main>
+
+  <script>
+    const AGENTS = {
+      "Astra":      { role:"Controller", C:"Gravity Well",       Q:"Nova Pulse",          E:"Nebula / Dissipate",      X:"Astral Form / Cosmic Divide" },
+      "Breach":     { role:"Initiator",  C:"Aftershock",         Q:"Flashpoint",          E:"Fault Line",              X:"Rolling Thunder" },
+      "Brimstone":  { role:"Controller", C:"Incendiary",         Q:"Sky Smoke",           E:"Stim Beacon",             X:"Orbital Strike" },
+      "Chamber":    { role:"Sentinel",   C:"Trademark",          Q:"Headhunter",          E:"Rendezvous",              X:"Tour de Force" },
+      "Clove":      { role:"Controller", C:"Meddle",             Q:"Pick-me-up",          E:"Ruse",                    X:"Not Dead Yet" },
+      "Cypher":     { role:"Sentinel",   C:"Trapwire",           Q:"Cyber Cage",          E:"Spycam",                  X:"Neural Theft" },
+      "Deadlock":   { role:"Sentinel",   C:"GravNet",            Q:"Sonic Sensor",        E:"Barrier Mesh",            X:"Annihilation" },
+      "Fade":       { role:"Initiator",  C:"Prowler",            Q:"Seize",               E:"Haunt",                   X:"Nightfall" },
+      "Gekko":      { role:"Initiator",  C:"Mosh Pit",           Q:"Wingman",             E:"Dizzy",                   X:"Thrash" },
+      "Harbor":     { role:"Controller", C:"Cascade",            Q:"Cove",                E:"High Tide",               X:"Reckoning" },
+      "Iso":        { role:"Duelist",    C:"Contingency",        Q:"Undercut",            E:"Double Tap",              X:"Kill Contract" },
+      "Jett":       { role:"Duelist",    C:"Cloudburst",         Q:"Updraft",             E:"Tailwind",                X:"Blade Storm" },
+      "KAY/O":      { role:"Initiator",  C:"FRAG/ment",          Q:"FLASH/drive",         E:"ZERO/point",              X:"NULL/cmd" },
+      "Killjoy":    { role:"Sentinel",   C:"Nanoswarm",          Q:"Alarmbot",            E:"Turret",                  X:"Lockdown" },
+      "Neon":       { role:"Duelist",    C:"Fast Lane",          Q:"Relay Bolt",          E:"High Gear",               X:"Overdrive" },
+      "Omen":       { role:"Controller", C:"Shrouded Step",      Q:"Paranoia",            E:"Dark Cover",              X:"From the Shadows" },
+      "Phoenix":    { role:"Duelist",    C:"Blaze",              Q:"Curveball",           E:"Hot Hands",               X:"Run It Back" },
+      "Raze":       { role:"Duelist",    C:"Boom Bot",           Q:"Blast Pack",          E:"Paint Shells",            X:"Showstopper" },
+      "Reyna":      { role:"Duelist",    C:"Leer",               Q:"Devour",              E:"Dismiss",                 X:"Empress" },
+      "Sage":       { role:"Sentinel",   C:"Barrier Orb",        Q:"Slow Orb",            E:"Healing Orb",             X:"Resurrection" },
+      "Skye":       { role:"Initiator",  C:"Regrowth",           Q:"Trailblazer",         E:"Guiding Light",           X:"Seekers" },
+      "Sova":       { role:"Initiator",  C:"Owl Drone",          Q:"Shock Bolt",          E:"Recon Bolt",              X:"Hunter's Fury" },
+      "Viper":      { role:"Controller", C:"Snake Bite",         Q:"Poison Cloud",        E:"Toxic Screen",            X:"Viper's Pit" },
+      "Yoru":       { role:"Duelist",    C:"Fakeout",            Q:"Blindside",           E:"Gatecrash",               X:"Dimensional Drift" }
+    };
+
+    const TEAM_SLOTS = 5;
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function roleToCssVar(role){
+      switch(role){
+        case "Duelist": return "var(--duelist)";
+        case "Initiator": return "var(--initiator)";
+        case "Controller": return "var(--controller)";
+        case "Sentinel": return "var(--sentinel)";
+        default: return "rgba(255,255,255,.12)";
+      }
+    }
+
+    function applyRoleTint(slotEl, role){
+      const col = roleToCssVar(role);
+      slotEl.style.setProperty("--roleColor", col);
+      slotEl.style.setProperty("--roleTint",  `color-mix(in srgb, ${col} 16%, transparent)`);
+      slotEl.style.setProperty("--roleTint2", `color-mix(in srgb, ${col} 10%, transparent)`);
+    }
+
+    function agentOptionsHTML(){
+      const names = Object.keys(AGENTS).sort((a,b)=>a.localeCompare(b));
+      const opts = ['<option value="">Select agent…</option>'];
+      for(const n of names){
+        opts.push(`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+      }
+      return opts.join("");
+    }
+
+    function createSlot(slotIndex){
+      const wrap = document.createElement("div");
+      wrap.className = "slot";
+      wrap.dataset.index = String(slotIndex);
+
+      const label = String(slotIndex + 1).padStart(2,"0");
+      wrap.innerHTML = `
+        <div class="slotTop">
+          <div class="slotLabel">Slot ${label}</div>
+          <div class="roleTag" data-role="" title="Agent role">—</div>
+        </div>
+        <select aria-label="Select agent for slot ${label}">
+          ${agentOptionsHTML()}
+        </select>
+        <div class="agentName">No agent selected</div>
+        <div class="empty">Pick an agent to see ability names.</div>
+        <ul class="abilityList" hidden></ul>
+      `;
+
+      const sel = wrap.querySelector("select");
+      const nameEl = wrap.querySelector(".agentName");
+      const emptyEl = wrap.querySelector(".empty");
+      const list = wrap.querySelector(".abilityList");
+      const roleTag = wrap.querySelector(".roleTag");
+
+      function applyAgent(agent){
+        if(!agent){
+          nameEl.textContent = "No agent selected";
+          emptyEl.hidden = false;
+          list.hidden = true;
+          list.innerHTML = "";
+          roleTag.textContent = "—";
+          roleTag.dataset.role = "";
+          applyRoleTint(wrap, "");
+          return;
+        }
+
+        const data = AGENTS[agent];
+        nameEl.textContent = agent;
+
+        roleTag.textContent = data.role || "—";
+        roleTag.dataset.role = data.role || "";
+        applyRoleTint(wrap, data.role);
+
+        const items = [
+          ["C", data.C],
+          ["Q", data.Q],
+          ["E", data.E],
+          ["X", data.X]
+        ];
+
+        list.innerHTML = items.map(([k,v]) => `
+          <li class="abilityItem">
+            <span class="key">${k}</span>
+            <span class="abilityName">${escapeHtml(v || "—")}</span>
+          </li>
+        `).join("");
+
+        emptyEl.hidden = true;
+        list.hidden = false;
+      }
+
+      sel.addEventListener("change", () => applyAgent(sel.value));
+      applyAgent("");
+      return wrap;
+    }
+
+    function renderTeamRow(containerId){
+      const row = document.getElementById(containerId);
+      row.innerHTML = "";
+      for(let i=0;i<TEAM_SLOTS;i++){
+        row.appendChild(createSlot(i));
+      }
+    }
+
+    function allSelects(){
+      return [...document.querySelectorAll(".slot select")];
+    }
+
+    function isLocked(){
+      return document.getElementById("lockToggle").checked;
+    }
+
+    function clearAll(){
+      if (isLocked()) return;
+      allSelects().forEach(s => { s.value = ""; s.dispatchEvent(new Event("change")); });
+    }
+
+    function swapTeams(){
+      if (isLocked()) return;
+
+      const row1 = document.getElementById("team1Row");
+      const row2 = document.getElementById("team2Row");
+
+      const r1 = [...row1.querySelectorAll(".slot")];
+      const r2 = [...row2.querySelectorAll(".slot")];
+
+      for(let i=0;i<TEAM_SLOTS;i++){
+        const s1 = r1[i].querySelector("select");
+        const s2 = r2[i].querySelector("select");
+        const tmp = s1.value;
+        s1.value = s2.value;
+        s2.value = tmp;
+      }
+
+      allSelects().forEach(s => s.dispatchEvent(new Event("change")));
+
+      const t1 = document.getElementById("team1Name");
+      const t2 = document.getElementById("team2Name");
+      const tmpName = t1.textContent;
+      t1.textContent = t2.textContent;
+      t2.textContent = tmpName;
+    }
+
+    function setLocked(locked){
+      allSelects().forEach(s => s.disabled = locked);
+
+      const lockState = document.getElementById("lockState");
+      const lockHelp = document.getElementById("lockHelp");
+      if(locked){
+        lockState.textContent = "LOCKED";
+        lockState.classList.remove("off");
+        lockState.classList.add("on");
+        lockHelp.textContent = "Dropdowns and action buttons are disabled (team names still editable).";
+      }else{
+        lockState.textContent = "UNLOCKED";
+        lockState.classList.remove("on");
+        lockState.classList.add("off");
+        lockHelp.textContent = "You can change agent selections.";
+      }
+
+      document.getElementById("clearAllBtn").disabled = locked;
+      document.getElementById("swapBtn").disabled = locked;
+    }
+
+    // --- Caster vocab (randomized 5x10, no duplicates) ---
+    const CASTER_VOCAB_POOL = [
+      "pistol round","conversion round","anti-eco","eco round","full buy","force buy","half buy","light buy","bonus round",
+      "thrift y win","clean conversion","economy swing","credit advantage","broke","stacked bank","low bank","buy parity",
+      "uneven buys","win bonus","loss bonus","reset potential","money reset","save call","save the rifles","exit frags",
+      "exit damage","hunting exits","keep them honest","upgrade weapon","hero rifle","sheriff stack","stinger force",
+      "spectre bonus","bulldog buy","guardian angle","operator online","op posted","op rotated","op reposition","op threat",
+      "op denied","op punished","double op","op lane","rifle round","vandals out","phantoms out","heavy shields",
+      "light shields","no armor","util investment","util light","full utility","low utility","dry peek","contact play",
+      "no info","information play","early info","late info","defaulting","heavy default","slow default","map control",
+      "mid control","lane control","space taken","space conceded","pressure applied","pressure relieved","pivoting",
+      "rotation timing","late rotate","fast rotate","instant hit","burst hit","site exec","execute cleanly","layered execute",
+      "telegraphed hit","fake setup","full fake","partial fake","lurk timing","lurk value","deep lurk","flank threat",
+      "flank watch","backstab angle","pinch incoming","split hit","mid split","three-pronged","two-man probe","pick attempt",
+      "opening duel","first blood","entry frag","trade frag","traded out","untradeable","isolated","caught alone",
+      "swing together","double swing","wide swing","shoulder peek","jiggle peek","jump peek","bait and switch","crossfire",
+      "double cross","off-angle","tight angle","pixel angle","rat corner","one-and-done","fall back","reposition","re-peek",
+      "punished re-peek","disciplined","patient","composed","icy","clinical","crisp","sharp","clean","precise","mechanical",
+      "snappy","explosive","proactive","reactive","measured","controlled","chaotic","scrappy","desperate","risky","safe",
+      "low percentage","high percentage","textbook","by the book","heads-up","big brain","mind game","read them","called it",
+      "anti-stratted","adaptation","mid-rounding","mid-round call","audible","tempo change","pace shift","slow it down",
+      "speed it up","contact explode","timeout vibes","momentum","snowballing","stabilization","crisis averted",
+      "round win condition","win con denied","timing window","timing punished","utility damage","chip damage","tagged up",
+      "spammed down","wallbang","spam through smoke","spray transfer","multi-kill","opener found","entry denied","lockdown",
+      "shut down","dismantled","overwhelmed","outnumbered","numbers advantage","man advantage","man disadvantage",
+      "equalized","clawed back","miracle round","clutch factor","clutch gene","clutch attempt","clutch denied",
+      "1v1","1v2","1v3","1v4","1v5","last alive","isolated duel","play the time","time pressure","spike ticking",
+      "tap the spike","stick it","half defuse","off the spike","post-plant setup","post-plant lineups","post-plant utility",
+      "stall utility","delay tools","retake coming","retake utility","retake timing","retake denied","retake clean",
+      "messy retake","site anchor","anchor holds","anchor falls","hold the line","hold strong","crumble","site cracked",
+      "site locked","site surrendered","play retake","give up site","fight for site","contesting","contested space",
+      "early fight","late fight","choke point","funnel","kill zone","danger area","utility dump","util layered","util stacked",
+      "util wasted","util value","util traded","flash timing","pop flash","deep flash","anti-flash","flash and swing",
+      "flash dodge","smoked off","smoke fades","one-way smoke","re-smoke","smoke refresh","smoke gap","smoke punish",
+      "smoke spam","molly down","molly line","molly stall","nade value","shock damage","dart spots","recon connects",
+      "recon destroyed","drone cleared","dog cleared","cam contact","trap triggers","tripwire popped","alarmbot tag",
+      "turret online","ult online","ult available","ult economy","ult cycle","ult invested","ult forced","ult countered",
+      "ult shutdown","ult value","ult whiff","post-plant ult","retake ult","site denial","zone control","choke denial",
+      "space maker","initiator value","duelist space","controller clutch","sentinel lockdown","entry responsibility",
+      "second contact","trade buddy","lurker role","flank holder","spike carrier","spike down","spike recovered",
+      "spike planted","plant denied","plant safe","plant open","default plant","cheeky plant","stick plant","plant tap",
+      "post-plant positions","post-plant crossfires","post-plant discipline","swing off contact","swing off util",
+      "swing off sound","audio cue","sound discipline","footsteps heard","silent walk","contact made","first contact",
+      "second contact","third man swing","late lurk timing","late flank","flank arrives","flank denied","backsite control",
+      "backside cleared","close corners","deep corners","clear angles","clear methodically","clear with util",
+      "knife out punished","caught rotating","caught reloading","caught with util","swing timing","off timing",
+      "perfect timing","timing trap","overheat","overheating","respect the op","challenged the op","op baited","op saved",
+      "op trapped","posted on the line","holding the pixel","holding for swing","holding for contact","contact swing",
+      "wide peek punished","punished by discipline","aim diff","mechanics diff","micro-adjustment","crosshair placement",
+      "pre-aimed","pre-fired","prefire angle","counter-strafe","swing and miss","flick shot","one tap","crisp headshot",
+      "instant headshot","spray down","run-and-gun punished","spike pressure","defuse pressure","clutch smoke",
+      "clutch flash","clutch molly","clutch wall","clutch stun","clutch slow","clutch dart","clutch recon",
+      "clutch paranoia","clutch dismissal","clutch dash","dash out","dash in","updraft angle","satchel entry",
+      "double satchel","Raze nade value","boom bot info","Sova recon","shock dart lineup","Fade haunt","prowler clears",
+      "Skye dog","guiding light","Breach fault line","Breach aftershock","KAY/O knife","suppressed","KAY/O pop flash",
+      "Gekko wingman plant","Dizzy tag","Harbor cascade","Cove plant","Viper wall up","Viper pit","toxic screen value",
+      "Brimstone smokes","orbital strike","Omen paranoia","Omen smoke","Omen TP","Astra stars","gravity well","nova pulse",
+      "Killjoy lockdown","nanoswarm","Cypher cam","Cypher trips","Sage wall","Sage slow","Sage res online",
+      "Chamber rendezvous","Chamber op","Tour de Force","Reyna leer","dismissal","Empress online","Phoenix flash",
+      "run it back","Neon stun","relay bolt","Neon sprint","Iso shielded","Iso duel","Jett knives","Blade Storm",
+      "Yoru fakeout","dimensional drift","Raze showstopper","Sova hunter’s fury","Fade nightfall","Skye seekers",
+      "Breach rolling thunder","Brim ult","Omen from the shadows","Astra cosmic divide","Viper’s pit",
+      "Killjoy lockdown radius","Cypher neural theft","Sage resurrection","Harbor reckoning","KAY/O null/cmd",
+      "Gekko thrash","ultimate layer","ultimate stack","ultimate exchange","utility trade-off","defender-sided",
+      "attacker-sided","map momentum","side swap","pistol discipline","eco discipline","discipline to save","greedy peek",
+      "greedy swing","punished greed","overextension","punished overextension","spacing","tight spacing","loose spacing",
+      "grouped up","split apart","isolated fights","favorable duels","unfavorable duels","flood the site","hit the brakes",
+      "baited rotation","rotation bite","rotate cancels","late round call","clutch decision","macro adjustment",
+      "micro outplay","straight up outplay","composure check","pressure moment","must-win round","pivotal round",
+      "turning point","statement round","heartbreak round","championship composure"
+    ];
+
+    function normalizeCue(s){
+      return s === "thrift y win" ? "thrifty win" : s;
+    }
+
+    function shuffleInPlace(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function uniquePoolFrom(list){
+      const seen = new Set();
+      const out = [];
+      for(const raw of list){
+        const v = normalizeCue(String(raw).trim());
+        if(!v) continue;
+        if(seen.has(v)) continue;
+        seen.add(v);
+        out.push(v);
+      }
+      return out;
+    }
+
+    function buildVocabGrid(){
+      const grid = document.getElementById("vocabGrid");
+      if(!grid) return;
+
+      const pool = uniquePoolFrom(CASTER_VOCAB_POOL);
+      if(pool.length < 50){
+        grid.innerHTML = `<div style="color: rgba(255,255,255,.8); padding: 10px;">
+          Not enough unique vocab items to fill 50 slots.
+        </div>`;
+        return;
+      }
+
+      shuffleInPlace(pool);
+      const picks = pool.slice(0, 50);
+
+      const columns = 5;
+      const rows = 10;
+
+      grid.innerHTML = "";
+      for(let c=0; c<columns; c++){
+        const ul = document.createElement("ul");
+        for(let r=0; r<rows; r++){
+          const li = document.createElement("li");
+          li.textContent = picks[c*rows + r];
+          ul.appendChild(li);
+        }
+        grid.appendChild(ul);
+      }
+    }
+
+    // init
+    renderTeamRow("team1Row");
+    renderTeamRow("team2Row");
+
+    document.getElementById("clearAllBtn").addEventListener("click", clearAll);
+    document.getElementById("swapBtn").addEventListener("click", swapTeams);
+
+    document.getElementById("lockToggle").addEventListener("change", (e) => {
+      setLocked(e.target.checked);
+    });
+
+    // Start blank + unlocked
+    allSelects().forEach(s => { s.value = ""; s.dispatchEvent(new Event("change")); });
+    setLocked(false);
+
+    // Randomize vocab on load
+    buildVocabGrid();
+  </script>
+</body>
+</html>
